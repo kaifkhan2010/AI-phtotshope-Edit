@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Photoshope Edit </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+        .enterprise-glass {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .enterprise-glow {
+            box-shadow: 0 0 40px -10px rgba(79, 70, 229, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white antialiased">
+
+    <!-- Navbar -->
+    <nav class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-2xl enterprise-glow">
+        <div class="flex items-center space-x-3">
+            <span class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white p-2.5 rounded-xl font-bold text-base shadow-lg shadow-indigo-500/25 flex items-center justify-center">🎨</span>
+            <div>
+                <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                    AI Photoshop Edit  <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">ENTERPRISE</span>
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">(Dev by : Kaif khan ) </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="resetStudio()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-amber-500/20 hover:border-amber-500/40 shadow-sm flex items-center gap-2 cursor-pointer active:scale-95">
+                <span>🔄</span> Reset
+            </button>
+            <span class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-medium flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Studio Active
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+
+        <!-- Left Box: Document Selector & Gallery -->
+        <section class="enterprise-glass p-6 rounded-2xl shadow-2xl flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500"></div>
+            <div class="space-y-5">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+                    <span>✂️</span>   Upload Document
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Select Work Mode</label>
+                        <select id="workMode" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-medium cursor-pointer transition-all shadow-inner">
+                            <option value="id_cards">ID Card / Aadhaar </option>
+                            <option value="pan_card">PAN Card </option>
+                            <option value="voter_id">Voter ID Card </option>
+                            <option value="passport">Passport Photo </option>
+                        </select>
+                    </div>
+
+                    <!-- Passport Options -->
+                    <div id="passportOptions" class="hidden p-3.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1.5 shadow-inner">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Passport Grid Type</label>
+                        <select id="sheetMode" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer">
+                            <option value="passport">Passport 9 Photos (3x3 per row)</option>
+                            <option value="passport_12">Passport 12 Photos (3x4  per row)</option>
+                            <option value="passport_16">passport 16 photos (4x4  per row)</option>
+
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Select File (PDF or Image)</label>
+                        <input type="file" id="rawFile" accept="image/*,application/pdf" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer transition-all shadow-inner">
+                    </div>
+
+                    <!-- PDF Password Box -->
+                    <div id="pdfPasswordDiv" class="hidden p-4 bg-slate-900/80 rounded-xl border border-indigo-500/30 space-y-2 shadow-lg">
+                        <label class="block text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                            <span>🔐</span> PDF Password (agar zaroorat ho)
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="password" id="pdfPassword" placeholder="Password darj karein" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono shadow-inner">
+                            <button type="button" id="unlockPdfBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all shadow-md">
+                                Unlock PDF 🔓
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 👀 Saved Gallery List -->
+            <div id="previewGallery" class="mt-6 hidden p-4 bg-slate-900/90 rounded-xl border border-indigo-500/30 shadow-inner space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center justify-between">
+                    <span class="flex items-center gap-2"><span>👀</span> Cut & Saved Gallery</span>
+                    <span id="previewCount" class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md font-mono">0 items</span>
+                </h3>
+                <div id="previewCardsList" class="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1"></div>
+            </div>
+        </section>
+
+        <!-- Right Box: Print Studio -->
+        <section class="enterprise-glass p-6 rounded-2xl shadow-2xl flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-indigo-500 to-violet-500"></div>
+            <div>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-400 mb-5 flex items-center gap-2">
+                    <span>🖨️</span> Output Print Sheet
+                </h2>
+
+                <div class="space-y-4">
+                    <input type="hidden" id="printDocIds">
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Sheet Format</label>
+                        <select id="layoutType" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer font-medium shadow-inner">
+                            <option value="4x6">4x6  Sheet</option>
+                            <option value="A4">A4  Sheet</option>
+                        </select>
+                    </div>
+
+                    <button id="printBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] font-bold py-3.5 rounded-xl transition-all duration-200 shadow-xl shadow-emerald-600/20 text-sm tracking-wide text-white cursor-pointer flex items-center justify-center gap-2">
+                        <span>🚀</span> Generate Final Print Sheet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Print & Download Actions Box -->
+            <div id="printResult" class="mt-6 hidden p-4 bg-slate-900/80 rounded-xl border border-slate-800 text-center space-y-3 shadow-inner">
+                <button id="directPrintBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-xl shadow-indigo-600/25 flex items-center justify-center gap-2 text-sm cursor-pointer">
+                    <span>🖨️</span> Print Direct (Printer Se Nikalein)
+                </button>
+                <a id="downloadLink" href="#" download="Print_Sheet.jpg" class="text-indigo-400 hover:text-indigo-300 transition-colors font-medium text-xs flex items-center justify-center gap-1.5 pt-1">
+                    <span>📥</span> Save Your PC  (Download Sheet)
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 🌟 FULLSCREEN CROP WORKSPACE MODAL (Bada Page / Pop-up) -->
+    <div id="fullscreenCropModal" class="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-2xl hidden flex flex-col p-4 md:p-8 overflow-y-auto">
+        <div class="max-w-6xl w-full mx-auto flex flex-col flex-grow bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl my-auto">
+
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800 mb-4">
+                <div>
+                    <h3 id="modalTitle" class="text-base font-bold text-indigo-400 flex items-center gap-2">
+                        <span>✂️</span> Fullscreen Crop Workspace
+                    </h3>
+                    <p id="cropInstruction" class="text-xs text-slate-400 mt-0.5">Aadhaar / ID Card ko saaf aur bade size me crop karein:</p>
+                </div>
+                <button onclick="closeFullscreenModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer">
+                    Cancel
+                </button>
+            </div>
+
+            <!-- Workspace Body: Cropper + Live Preview -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-grow items-center">
+
+                <!-- Massive Cropper Container (3 columns width) -->
+                <div class="lg:col-span-3 h-[60vh] bg-black/70 rounded-xl border border-slate-800 flex justify-center items-center overflow-hidden p-2">
+                    <img id="imageToCrop" src="#" alt="To Crop" class="max-h-full max-w-full object-contain">
+                </div>
+
+                <!-- Live Preview Box (1 column width) -->
+                <div class="h-[60vh] bg-slate-950 rounded-xl border border-indigo-500/30 p-3 flex flex-col justify-center items-center shadow-inner">
+                    <span class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Live Real-Time Preview</span>
+                    <div class="w-full h-[85%] flex justify-center items-center overflow-hidden bg-black/50 rounded-lg border border-slate-900 p-1">
+                        <canvas id="livePreviewCanvas" class="max-h-full max-w-full object-contain"></canvas>
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-2 text-center">Final aisi dikhegi</span>
+                </div>
+            </div>
+
+            <!-- 🎨 Passport Background Color & Border Control -->
+            <div id="passportBgControl" class="hidden mt-4 p-3.5 bg-slate-950/90 rounded-xl border border-slate-800 flex items-center justify-between gap-3">
+                <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-300">
+                    <input type="checkbox" id="applyBgColorCheck" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                    <span>🎨 Change Background Color & Border</span>
+                </label>
+                <div id="bgColorPickerDiv" class="hidden flex items-center gap-2">
+                    <span class="text-xs text-slate-400 font-medium">Color:</span>
+                    <input type="color" id="bgColorInput" value="#3b82f6" class="w-7 h-7 bg-transparent rounded cursor-pointer border border-slate-700">
+                </div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="mt-5 pt-4 border-t border-slate-800 flex justify-end gap-3">
+                <!-- ID Card / PAN / Voter Multi-Cut Buttons -->
+                <div id="idCutButtons" class="flex gap-3 w-full">
+                    <button type="button" id="cutFrontBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] font-bold py-3.5 rounded-xl text-xs tracking-wide transition-all shadow-lg shadow-indigo-600/30 cursor-pointer text-white">
+                        ✂️ Cut Part 1 (Top) & Save
+                    </button>
+                    <button type="button" id="cutBackBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] font-bold py-3.5 rounded-xl text-xs tracking-wide transition-all shadow-lg shadow-emerald-600/30 hidden cursor-pointer text-white">
+                        ✂️ Cut Part 2 (Bottom) & Finish
+                    </button>
+                </div>
+
+                <!-- Passport Single Save Button -->
+                <div id="passportSaveDiv" class="w-full hidden">
+                    <button type="button" id="savePassportBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] font-bold py-3.5 rounded-xl text-xs tracking-wide transition-all shadow-lg shadow-indigo-600/30 cursor-pointer text-white">
+                        Save Passport Photo 📸
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        let cropper = null;
+        let cutBufferIds = [];
+        let previewItemsData = [];
+        let pendingPdfBase64 = null;
+
+        const workModeSelect = document.getElementById('workMode');
+        const passportOptions = document.getElementById('passportOptions');
+        const sheetModeSelect = document.getElementById('sheetMode');
+        const fileInput = document.getElementById('rawFile');
+        const pdfPasswordDiv = document.getElementById('pdfPasswordDiv');
+        const pdfPasswordInput = document.getElementById('pdfPassword');
+        const unlockPdfBtn = document.getElementById('unlockPdfBtn');
+        const fullscreenCropModal = document.getElementById('fullscreenCropModal');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const livePreviewCanvas = document.getElementById('livePreviewCanvas');
+        const idCutButtons = document.getElementById('idCutButtons');
+        const cutFrontBtn = document.getElementById('cutFrontBtn');
+        const cutBackBtn = document.getElementById('cutBackBtn');
+        const passportSaveDiv = document.getElementById('passportSaveDiv');
+        const savePassportBtn = document.getElementById('savePassportBtn');
+        const cropInstruction = document.getElementById('cropInstruction');
+        const previewGallery = document.getElementById('previewGallery');
+        const previewCardsList = document.getElementById('previewCardsList');
+        const previewCount = document.getElementById('previewCount');
+        const printDocIds = document.getElementById('printDocIds');
+        const applyBgColorCheck = document.getElementById('applyBgColorCheck');
+        const bgColorPickerDiv = document.getElementById('bgColorPickerDiv');
+        const bgColorInput = document.getElementById('bgColorInput');
+        const passportBgControl = document.getElementById('passportBgControl');
+        let generatedPrintUrl = '';
+
+        applyBgColorCheck.addEventListener('change', function() {
+            if (this.checked) {
+                bgColorPickerDiv.classList.remove('hidden');
+            } else {
+                bgColorPickerDiv.classList.add('hidden');
+            }
+        });
+
+        function resetStudio() {
+            cutBufferIds = [];
+            previewItemsData = [];
+            printDocIds.value = '';
+            fileInput.value = '';
+            pendingPdfBase64 = null;
+            fullscreenCropModal.classList.add('hidden');
+            pdfPasswordDiv.classList.add('hidden');
+            document.getElementById('printResult').classList.add('hidden');
+            previewGallery.classList.add('hidden');
+            previewCardsList.innerHTML = '';
+            applyBgColorCheck.checked = false;
+            bgColorPickerDiv.classList.add('hidden');
+            bgColorInput.value = '#3b82f6';
+            passportBgControl.classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            cutFrontBtn.disabled = false;
+            cutFrontBtn.classList.remove('hidden');
+            cutBackBtn.classList.add('hidden');
+            cutFrontBtn.innerText = "✂️ Cut Part 1 (Top) & Save";
+            cutBackBtn.innerText = "✂️ Cut Part 2 (Bottom) & Finish";
+            const printBtn = document.getElementById('printBtn');
+            printBtn.disabled = false;
+            printBtn.innerText = "Generate Final Print Sheet 🚀";
+        }
+
+        function closeFullscreenModal() {
+            fullscreenCropModal.classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        workModeSelect.addEventListener('change', function() {
+            resetStudio();
+            if (this.value === 'passport') {
+                passportOptions.classList.remove('hidden');
+                idCutButtons.classList.add('hidden');
+                passportSaveDiv.classList.remove('hidden');
+                passportBgControl.classList.remove('hidden');
+            } else {
+                passportOptions.classList.add('hidden');
+                idCutButtons.classList.remove('hidden');
+                passportSaveDiv.classList.add('hidden');
+                passportBgControl.classList.add('hidden');
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            cutBufferIds = [];
+            previewItemsData = [];
+            printDocIds.value = '';
+            previewGallery.classList.add('hidden');
+            previewCardsList.innerHTML = '';
+
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+            const reader = new FileReader();
+
+            if (isPdf) {
+                pdfPasswordDiv.classList.remove('hidden');
+                pdfPasswordInput.value = '';
+                reader.onload = function(event) {
+                    pendingPdfBase64 = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                pdfPasswordDiv.classList.add('hidden');
+                pdfPasswordInput.value = '';
+                pendingPdfBase64 = null;
+
+                reader.onload = function(event) {
+                    openFullscreenCropper(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        unlockPdfBtn.addEventListener('click', async function() {
+            if (!pendingPdfBase64) {
+                alert('Kripya pehle PDF file select karein.');
+                return;
+            }
+            const password = pdfPasswordInput.value;
+            if (!password) {
+                alert('Kripya PDF password darj karein!');
+                return;
+            }
+
+            unlockPdfBtn.disabled = true;
+            unlockPdfBtn.innerText = "Unlocking...";
+
+            try {
+                const response = await fetch('/upload/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        doc_type: workModeSelect.value,
+                        image_data: pendingPdfBase64,
+                        title: 'PDF Converted',
+                        pdf_password: password
+                    })
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    pdfPasswordDiv.classList.add('hidden');
+                    openFullscreenCropper(resData.base64_data);
+                } else {
+                    alert('Error: ' + (resData.error || 'Password galat hai ya PDF khul nahi saki.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server connection error.');
+            } finally {
+                unlockPdfBtn.disabled = false;
+                unlockPdfBtn.innerText = "Unlock PDF 🔓";
+            }
+        });
+
+        function updateLivePreview() {
+            if (!cropper) return;
+            const currentMode = workModeSelect.value;
+            let targetW = null, targetH = null;
+            if (currentMode === 'id_cards' || currentMode === 'pan_card') {
+                targetW = 1016; targetH = 638;
+            } else if (currentMode === 'voter_id') {
+                targetW = 1004; targetH = 650;
+            } else if (currentMode === 'passport') {
+                targetW = 413; targetH = 531;
+            }
+
+            const canvas = cropper.getCroppedCanvas(targetW ? { width: targetW, height: targetH } : {});
+            if (canvas) {
+                const ctx = livePreviewCanvas.getContext('2d');
+                livePreviewCanvas.width = canvas.width;
+                livePreviewCanvas.height = canvas.height;
+                ctx.clearRect(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
+                ctx.drawImage(canvas, 0, 0);
+            }
+        }
+
+        function openFullscreenCropper(imageSrc) {
+            fullscreenCropModal.classList.remove('hidden');
+
+            if (workModeSelect.value === 'passport') {
+                cropInstruction.innerHTML = '✂️ Passport Photo ko bade workspace me select karein (Strict 3.5x4.5 ratio):';
+                idCutButtons.classList.add('hidden');
+                passportSaveDiv.classList.remove('hidden');
+                passportOptions.classList.remove('hidden');
+                passportBgControl.classList.remove('hidden');
+            } else {
+                idCutButtons.classList.remove('hidden');
+                passportSaveDiv.classList.add('hidden');
+                passportOptions.classList.add('hidden');
+                passportBgControl.classList.add('hidden');
+                cutFrontBtn.classList.remove('hidden');
+                cutBackBtn.classList.add('hidden');
+                cutFrontBtn.disabled = false;
+                cutFrontBtn.innerText = "✂️ Cut Part 1 (Top) & Save";
+                cropInstruction.innerHTML = '✂️ Step 1: Top Part (Front) ko bade size me theek se set karke "Cut Part 1" dabayein:';
+            }
+
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+
+            imageToCrop.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: workModeSelect.value === 'passport' ? (3.5 / 4.5) : NaN,
+                    viewMode: 1,
+                    autoCropArea: 0.9,
+                    responsive: true,
+                    crop: function(event) {
+                        updateLivePreview();
+                    }
+                });
+
+                setTimeout(updateLivePreview, 300);
+            };
+
+            imageToCrop.src = imageSrc;
+
+            if (imageToCrop.complete) {
+                imageToCrop.onload();
+            }
+        }
+
+        async function sendCroppedCanvasData(canvasWidth, canvasHeight, title, docType) {
+            if (!cropper) throw new Error('Cropper loaded nahi hai.');
+
+            const canvas = cropper.getCroppedCanvas(canvasWidth ? { width: canvasWidth, height: canvasHeight } : {});
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                throw new Error('Crop canvas blank hai. Kripya dobara theek se area select karein.');
+            }
+
+            const base64Image = canvas.toDataURL('image/jpeg', 0.95);
+
+            const payload = {
+                doc_type: docType,
+                image_data: base64Image,
+                title: title,
+                apply_bg: docType === 'passport' ? applyBgColorCheck.checked : false,
+                bg_color: bgColorInput.value || '#ffffff'
+            };
+
+            const response = await fetch('/upload/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            return await response.json();
+        }
+
+        function updateSavedGalleryUI() {
+            previewCardsList.innerHTML = '';
+            if (previewItemsData.length > 0) {
+                previewGallery.classList.remove('hidden');
+                previewCount.innerText = `${previewItemsData.length} item(s)`;
+                previewItemsData.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col items-center gap-1.5 relative group";
+                    card.innerHTML = `
+                        <img src="${item.url}" alt="${item.title}" class="h-20 w-full object-contain rounded bg-black/40 border border-slate-900">
+                        <span class="text-[11px] font-semibold text-slate-300 truncate w-full text-center">${item.title}</span>
+                    `;
+                    previewCardsList.appendChild(card);
+                });
+            } else {
+                previewGallery.classList.add('hidden');
+            }
+        }
+
+        cutFrontBtn.addEventListener('click', async function() {
+            try {
+                cutFrontBtn.disabled = true;
+                cutFrontBtn.innerText = "Cutting Part 1...";
+
+                const currentMode = workModeSelect.value;
+                const targetW = currentMode === 'voter_id' ? 1004 : 1016;
+                const targetH = currentMode === 'voter_id' ? 650 : 638;
+
+                const data = await sendCroppedCanvasData(targetW, targetH, 'Part 1 (Top)', currentMode);
+                if (data.id) {
+                    cutBufferIds.push(data.id);
+                    printDocIds.value = cutBufferIds.join(', ');
+
+                    previewItemsData.push({ id: data.id, title: 'Part 1 (Top)', url: data.file_url });
+                    updateSavedGalleryUI();
+
+                    cutFrontBtn.classList.add('hidden');
+                    cutBackBtn.classList.remove('hidden');
+                    cutBackBtn.disabled = false;
+                    cutBackBtn.innerText = "✂️ Cut Part 2 (Bottom) & Finish";
+                    cropInstruction.innerHTML = '✂️ Step 2: Ab Bottom Part (Back) ko set karke "Cut Part 2" dabayein:';
+                } else {
+                    alert('Error: ' + (data.error || 'Upload failed'));
+                    cutFrontBtn.disabled = false;
+                    cutFrontBtn.innerText = "✂️ Cut Part 1 (Top) & Save";
+                }
+            } catch (err) {
+                console.error(err);
+                alert('JS Error: ' + err.message);
+                cutFrontBtn.disabled = false;
+                cutFrontBtn.innerText = "✂️ Cut Part 1 (Top) & Save";
+            }
+        });
+
+        cutBackBtn.addEventListener('click', async function() {
+            try {
+                cutBackBtn.disabled = true;
+                cutBackBtn.innerText = "Cutting Part 2...";
+
+                const currentMode = workModeSelect.value;
+                const targetW = currentMode === 'voter_id' ? 1004 : 1016;
+                const targetH = currentMode === 'voter_id' ? 650 : 638;
+
+                const data = await sendCroppedCanvasData(targetW, targetH, 'Part 2 (Bottom)', currentMode);
+                if (data.id) {
+                    cutBufferIds.push(data.id);
+                    printDocIds.value = cutBufferIds.join(', ');
+
+                    previewItemsData.push({ id: data.id, title: 'Part 2 (Bottom)', url: data.file_url });
+                    updateSavedGalleryUI();
+
+                    fullscreenCropModal.classList.add('hidden');
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    alert('🎉 Dono parts cut hokar dashboard par save ho gaye hain! Ab "Generate Final Print Sheet" dabayein.');
+                } else {
+                    alert('Error: ' + (data.error || 'Upload failed'));
+                    cutBackBtn.disabled = false;
+                    cutBackBtn.innerText = "✂️ Cut Part 2 (Bottom) & Finish";
+                }
+            } catch (err) {
+                console.error(err);
+                cutBackBtn.disabled = false;
+                cutBackBtn.innerText = "✂️ Cut Part 2 (Bottom) & Finish";
+            }
+        });
+
+        savePassportBtn.addEventListener('click', async function() {
+            try {
+                savePassportBtn.disabled = true;
+                savePassportBtn.innerText = "Saving...";
+
+                const data = await sendCroppedCanvasData(null, null, 'Passport Photo', 'passport');
+                if (data.id) {
+                    cutBufferIds = [data.id];
+                    printDocIds.value = cutBufferIds.join(', ');
+
+                    previewItemsData.push({ id: data.id, title: 'Passport Photo', url: data.file_url });
+                    updateSavedGalleryUI();
+
+                    fullscreenCropModal.classList.add('hidden');
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    alert('📸 Passport photo save ho gayi hai! Dashboard par gallery me check kar sakte hain.');
+                } else {
+                    alert('Error: ' + (data.error || 'Save failed'));
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                savePassportBtn.disabled = false;
+                savePassportBtn.innerText = "Save Passport Photo 📸";
+            }
+        });
+
+        document.getElementById('printBtn').addEventListener('click', async function() {
+            const rawIds = printDocIds.value;
+            const layoutType = document.getElementById('layoutType').value;
+            const workMode = workModeSelect.value;
+
+            let sheetMode = workMode;
+            if (workMode === 'id_cards') sheetMode = 'id_cards';
+            else if (workMode === 'pan_card') sheetMode = 'pan_card';
+            else if (workMode === 'voter_id') sheetMode = 'voter_id';
+            else sheetMode = sheetModeSelect.value;
+
+            const docIds = rawIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+
+            if (docIds.length === 0) {
+                alert('Kripya pehle document cut/save karein.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/print-batch/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ document_ids: docIds, layout_type: layoutType, sheet_mode: sheetMode })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    generatedPrintUrl = data.print_sheet_url;
+                    document.getElementById('printResult').classList.remove('hidden');
+                    document.getElementById('downloadLink').href = generatedPrintUrl;
+                    alert('🎉 Final Print Sheet successfully generate ho gayi hai!');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Print sheet generate karne me error aayi hai.');
+            }
+        });
+
+        document.getElementById('directPrintBtn').addEventListener('click', function() {
+            if (generatedPrintUrl) {
+                const printWindow = window.open(generatedPrintUrl, '_blank');
+                if (printWindow) {
+                    printWindow.onload = function() {
+                        printWindow.print();
+                    };
+                }
+            } else {
+                alert('Pehle Print Sheet generate karein.');
+            }
+        });
+    </script>
+</body>
+</html>
