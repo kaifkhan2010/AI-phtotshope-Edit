@@ -13,7 +13,6 @@ from .models import Document
 # PyMuPDF for secure PDF handling & decryption
 try:
     import fitz  # PyMuPDF
-
     PYMUPDF_AVAILABLE = True
 except ImportError:
     PYMUPDF_AVAILABLE = False
@@ -21,7 +20,6 @@ except ImportError:
 # Safe rembg & u2netp session initialization for Passport only
 try:
     from rembg import remove, new_session
-
     REMBG_AVAILABLE = True
     u2netp_session = new_session('u2netp')
 except Exception as e:
@@ -40,7 +38,7 @@ def document_gallery_view(request):
 
 @csrf_exempt
 def delete_document_view(request, pk=None):
-    if request.method == 'POST' or request.method == 'DELETE':
+    if request.method in ['POST', 'DELETE']:
         try:
             doc_id = pk
             if not doc_id and request.body:
@@ -111,19 +109,19 @@ def upload_document_view(request):
             if img.width < 10 or img.height < 10:
                 return JsonResponse({'error': 'Uploaded image invalid ya blank hai.'}, status=400)
 
-            # 🛑 1. AADHAAR / ID CARDS: Exact 8.6cm x 5.4cm (1016x638 px)
+            # 1. ID CARDS
             if doc_type == 'id_cards':
                 img = img.resize((1016, 638), Image.Resampling.LANCZOS)
 
-            # 💳 2. PAN CARD: Exact 8.6cm x 5.4cm (1016x638 px)
+            # 2. PAN CARD
             elif doc_type == 'pan_card':
                 img = img.resize((1016, 638), Image.Resampling.LANCZOS)
 
-            # 🗳️ 3. VOTER ID CARD: Exact 8.5cm x 5.5cm (1004x650 px)
+            # 3. VOTER ID CARD
             elif doc_type == 'voter_id':
                 img = img.resize((1004, 650), Image.Resampling.LANCZOS)
 
-            # 🎨 4. PASSPORT ONLY: Zero Face Bleed & Clean Solid Background
+            # 4. PASSPORT ONLY
             elif doc_type == 'passport':
                 img = img.resize((413, 531), Image.Resampling.LANCZOS)
 
@@ -131,7 +129,6 @@ def upload_document_view(request):
                     hex_color = bg_color.lstrip('#')
                     rgb_tuple = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
-                    bg_applied = False
                     if REMBG_AVAILABLE and u2netp_session:
                         try:
                             img_rgba = img.convert("RGBA")
@@ -148,12 +145,8 @@ def upload_document_view(request):
                             solid_bg = Image.new("RGBA", img.size, rgb_tuple + (255,))
                             solid_bg.paste(no_bg_img, (0, 0), no_bg_img)
                             img = solid_bg.convert("RGB")
-                            bg_applied = True
                         except Exception as ex:
                             print("Rembg error:", ex)
-
-                    if not bg_applied:
-                        img = Image.new("RGB", (413, 531), rgb_tuple)
 
                 border_width = 3
                 img = ImageOps.expand(img, border=border_width, fill='black')
@@ -195,9 +188,8 @@ def print_batch_view(request):
         try:
             data = json.loads(request.body)
             doc_ids = data.get('document_ids', [])
-            layout_type = data.get('layout_type', '4x6')  # '4x6' or 'A4'
-            sheet_mode = data.get('sheet_mode',
-                                  'id_cards')  # 'id_cards', 'passport', 'passport_12', 'pan_card', 'voter_id'
+            layout_type = data.get('layout_type', '4x6')
+            sheet_mode = data.get('sheet_mode', 'id_cards')
 
             docs_dict = {doc.id: doc for doc in Document.objects.filter(id__in=doc_ids)}
             docs = [docs_dict[did] for did in doc_ids if did in docs_dict]
@@ -207,13 +199,16 @@ def print_batch_view(request):
 
             images = []
             for doc in docs:
-                img_field = getattr(doc, 'image', None) or getattr(doc, 'raw_file', None) or getattr(doc,
-                                                                                                     'processed_file',
-                                                                                                     None)
-                if img_field and hasattr(img_field, 'path') and os.path.exists(img_field.path):
-                    loaded_img = Image.open(img_field.path).convert("RGB")
-                    if loaded_img.width > 10 and loaded_img.height > 10:
-                        images.append(loaded_img)
+                img_field = getattr(doc, 'image', None) or getattr(doc, 'raw_file', None) or getattr(doc, 'processed_file', None)
+                if img_field:
+                    try:
+                        # Cloud safe image loading
+                        with img_field.open('rb') as f:
+                            loaded_img = Image.open(f).convert("RGB")
+                            if loaded_img.width > 10 and loaded_img.height > 10:
+                                images.append(loaded_img)
+                    except Exception as img_err:
+                        print("Error reading image field:", img_err)
 
             if not images:
                 return JsonResponse({'error': 'Images load nahi ho saki ya blank hain.'}, status=400)
@@ -225,21 +220,20 @@ def print_batch_view(request):
 
             sheet = Image.new("RGB", (sheet_w, sheet_h), (255, 255, 255))
 
-            # 📸 PASSPORT GRID CHECK
+            # 📸 PASSPORT GRID
             if 'passport' in sheet_mode:
                 if '16' in sheet_mode:
-                    cols, rows = 4, 4  # 4x4 = 16 Photos
+                    cols, rows = 4, 4
                 elif '12' in sheet_mode:
-                    cols, rows = 3, 4  # 3x4 = 12 Photos
+                    cols, rows = 3, 4
                 elif '8' in sheet_mode:
-                    cols, rows = 2, 4  # 2x4 = 8 Photos
+                    cols, rows = 2, 4
                 else:
                     cols = 3
-                    rows = 3 if sheet_mode == 'passport' else 3  # Default 9 Photos
-                margin_x = 100
-                margin_y = 100
-                spacing_x = 50
-                spacing_y = 50
+                    rows = 3 or (4 if layout_type != '4x6' else 3)
+
+                margin_x, margin_y = 100, 100
+                spacing_x, spacing_y = 50, 50
 
                 avail_w = sheet_w - (2 * margin_x) - ((cols - 1) * spacing_x)
                 avail_h = sheet_h - (2 * margin_y) - ((rows - 1) * spacing_y)
@@ -259,8 +253,7 @@ def print_batch_view(request):
                 start_x = (sheet_w - total_grid_w) // 2
                 start_y = (sheet_h - total_grid_h) // 2
 
-                curr_x = start_x
-                curr_y = start_y
+                curr_x, curr_y = start_x, start_y
 
                 for r in range(rows):
                     for c in range(cols):
@@ -270,7 +263,7 @@ def print_batch_view(request):
                     curr_y += pass_img.height + spacing_y
 
             else:
-                # ID Cards, PAN Card, Voter ID (Top & Bottom multi-cut sheet arrangement)
+                # ID Cards, PAN, Voter ID
                 y_offset = 60
                 for img in images[:2]:
                     img_w, img_h = img.size
