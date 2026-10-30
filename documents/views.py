@@ -5,7 +5,7 @@ from io import BytesIO
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from .models import Document
@@ -129,6 +129,7 @@ def upload_document_view(request):
                     hex_color = bg_color.lstrip('#')
                     rgb_tuple = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
+                    bg_applied = False
                     if REMBG_AVAILABLE and u2netp_session:
                         try:
                             img_rgba = img.convert("RGBA")
@@ -145,8 +146,19 @@ def upload_document_view(request):
                             solid_bg = Image.new("RGBA", img.size, rgb_tuple + (255,))
                             solid_bg.paste(no_bg_img, (0, 0), no_bg_img)
                             img = solid_bg.convert("RGB")
+                            bg_applied = True
                         except Exception as ex:
-                            print("Rembg error:", ex)
+                            print("Rembg error on PythonAnywhere:", ex)
+
+                    # Fallback agar rembg fail ho jaye (Simple floodfill background color replace)
+                    if not bg_applied:
+                        try:
+                            img_rgba = img.convert("RGBA")
+                            ImageDraw.floodfill(img_rgba, (0, 0), rgb_tuple + (255,), thresh=30)
+                            ImageDraw.floodfill(img_rgba, (img.width - 1, 0), rgb_tuple + (255,), thresh=30)
+                            img = img_rgba.convert("RGB")
+                        except Exception as fallback_err:
+                            print("Fallback bg error:", fallback_err)
 
                 border_width = 3
                 img = ImageOps.expand(img, border=border_width, fill='black')
